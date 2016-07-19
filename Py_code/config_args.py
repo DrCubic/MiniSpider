@@ -7,7 +7,7 @@
 ########################################################################
  
 """
-File: configArgs.py
+File: config_args.py
 Author: mijianhong(mijianhong@baidu.com)
 Date: 2016/07/08 13:53:12
 """
@@ -34,7 +34,7 @@ class ConfigArgs(object):
         self.file_path = file_path
         self.config_dict = {}
 
-    def load_from_file(self):
+    def initialize(self):
         """
         load from configurations from conf_file
         """
@@ -43,12 +43,12 @@ class ConfigArgs(object):
         if len(conf_res) == 0:
             return False
         try:
-            self.config_dict['url_list_file'] = config.get('spider', 'url_list_file')
-            self.config_dict['output_directory'] = config.get('spider', 'output_directory')
+            self.config_dict['url_list_file'] = config.get('spider', 'url_list_file').strip()
+            self.config_dict['output_directory'] = config.get('spider', 'output_directory').strip()
             self.config_dict['max_depth'] = config.getint('spider', 'max_depth')
             self.config_dict['crawl_timeout'] = config.getfloat('spider', 'crawl_timeout')
             self.config_dict['crawl_interval'] = config.getfloat('spider', 'crawl_interval')
-            self.config_dict['target_url'] = config.get('spider', 'target_url')
+            self.config_dict['target_url'] = config.get('spider', 'target_url').strip()
             self.config_dict['thread_count'] = config.getint('spider', 'thread_count')
             self.config_dict['try_times'] = 3
             self.config_dict['tag_dict'] = {'a':'href', 'img':'src', 'link':'href', 'script':'src'}

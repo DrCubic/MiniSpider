@@ -17,7 +17,7 @@ import logging
 
 import termcolor
 
-import miniSpider
+import mini_spider
 import log
 
 if __name__ == '__main__':
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     log.init_log('./log/mini_spider')    
     logging.info('%-35s' % ' * miniSpider is starting ... ')
     red_on_cyan = lambda x: termcolor.colored(x, 'red', 'on_cyan')
-    # *****************************************************************  start  ********************************************************************
+    # *********************************  start  ***************************************
     # set args for the program
     parser = argparse.ArgumentParser(description = 'This is a mini spider program!')
     parser.add_argument('-v', 
@@ -47,12 +47,12 @@ if __name__ == '__main__':
  
     # create an instance of miniSpider and start crawling 
     print red_on_cyan('* MiniSpider is Staring ... ')
-    mini_spider = miniSpider.MiniSpider(args.CONF_PATH)
-    ms = mini_spider.Initialize()
-    if ms:
-        mini_spider.pre_print()
-        mini_spider.run_threads()
+    mini_spider_ = mini_spider.MiniSpider(args.CONF_PATH)
+    init_success = mini_spider_.initialize()
+    if init_success:
+        mini_spider_.pre_print()
+        mini_spider_.run_threads()
         
-    # ***************************************************************** end  ***********************************************************************
+    # *********************************** end  *****************************************
     logging.info('%-35s' % ' * miniSpider is ending ...')
     print red_on_cyan('* MiniSpider is ending ... ')
