@@ -16,7 +16,7 @@ import sys
 import os
 
 sys.path.append('../')
-import htmlParse
+import html_parser
 
 class TestHtmlParse(unittest.TestCase):
     """
@@ -31,18 +31,39 @@ class TestHtmlParse(unittest.TestCase):
             </html>
         """
         ddict = {'a':'href', 'img':'src', 'link':'href', 'script':'src'}
-        self.htmlparse = htmlParse.HtmlParser(content, 'html5lib', ddict, 'www.baidu.com')
+        self.htmlparser = html_parser.HtmlParser(content, ddict, 'www.baidu.com')
 
     def test_extract_url(self):
         """
         test In for extract_url function
         """
         self.assertIn('http://img.firefoxchina.cn/2016/07/4/201607010831530.jpg', 
-                       self.htmlparse.extract_url()
+                       self.htmlparser.extract_url()
                        )
 
+    def test_unicode_to_utf8(self):
+        """
+        test True for func - enc_to_utf8() of unicode_to_utf8
+        """
+        self.htmlparser.content = u'没事的发水电费'
+        self.assertTrue(self.htmlparser.enc_to_utf8())
+
+    def test_gbk_to_utf8(self):
+        """
+        test True for func - enc_to_utf8() of gbk_to_utf8
+        """
+        self.htmlparser.content = u'苏打水地方'.encode('gbk')
+        self.assertTrue(self.htmlparser.enc_to_utf8())
+
+    def test_utf8_utf8(self):
+        """
+        test True for func - enc_to_utf8() of utf8_to_utf8
+        """
+        self.htmlparser.content = u"撒旦法撒旦法".encode('utf-8')
+        self.assertTrue(self.htmlparser.enc_to_utf8())
+
     def tearDown(self):
-        self.htmlparse = None
+        self.htmlparser = None
 
 if __name__ == '__main__':
     unittest.main()

@@ -16,8 +16,8 @@ import sys
 import os
 
 sys.path.append('../')
-import miniSpider
-import configArgs
+import mini_spider
+import url_object
 
 class TestMiniSpider(unittest.TestCase):
     """
@@ -25,14 +25,37 @@ class TestMiniSpider(unittest.TestCase):
     """
 
     def setUp(self):
-        self.minispider = miniSpider.MiniSpider('spider.conf')
+        self.minispider = mini_spider.MiniSpider('spider.conf')
 
     def test_initialize(self):
         """
         test True for conf_is_exist() function
         """
         os.chdir('../')
-        self.assertTrue(self.minispider.Initialize())
+        self.assertTrue(self.minispider.initialize())
+
+    def test_not_visited(self):
+        """
+        test False for func - is_visited()
+        """
+        url = url_object.Url("http://www.baidu.com")
+        self.assertFalse(self.minispider.is_visited(url))
+
+    def test_has_visited(self):
+        """
+        test True for func - is_visited()
+        """
+        url = url_object.Url("http://www.baidu.com")
+        self.minispider.checked_url.append(url)
+        self.assertTrue(self.minispider.is_visited(url))
+
+    def test_has_visited_(self):
+        """
+        test True for func - is_visited()
+        """
+        url = url_object.Url("http://www.baidu.com")
+        self.minispider.error_url.append(url)
+        self.assertTrue(self.minispider.is_visited(url))
 
     def tearDown(self):
         self.minispider = None

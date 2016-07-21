@@ -15,7 +15,7 @@ import unittest
 import sys
 
 sys.path.append('../')
-import configArgs
+import config_args
 
 class TestConfigArgs(unittest.TestCase):
     """
@@ -23,20 +23,20 @@ class TestConfigArgs(unittest.TestCase):
     """
 
     def setUp(self):
-        self.configargs = configArgs.ConfigArgs('../spider.conf')
+        self.configargs = config_args.ConfigArgs('../spider.conf')
 
     def test_load_from_file_success(self):
         """
         test True for function load_from_file()
         """
-        self.assertTrue(self.configargs.load_from_file())
+        self.assertTrue(self.configargs.initialize())
 
     def test_load_from_file_fail(self):
         """
         test False for function load_from_file()
         """
         self.configargs.file_path = 'spider.conf_'
-        self.assertFalse(self.configargs.load_from_file())
+        self.assertFalse(self.configargs.initialize())
 
     def tearDown(self):
         self.configargs = None
