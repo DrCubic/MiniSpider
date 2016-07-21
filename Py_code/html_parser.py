@@ -91,15 +91,15 @@ class HtmlParser(object):
         """
         encoding = self.detect_encoding()
         try:
-            if encoding.lower() == 'unicode':
+            if encoding is None:
+                return False
+
+            elif encoding.lower() == 'unicode':
                 self.content = self.content.encode('utf-8')
                 return True
 
             elif encoding.lower() == 'utf-8':
                 return True
-
-            elif encoding is None:
-                return False
 
             else:
                 self.content = self.content.decode(encoding, 'ignore').encode('utf-8')

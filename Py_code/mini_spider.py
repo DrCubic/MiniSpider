@@ -130,6 +130,9 @@ class MiniSpider(object):
             lines = f.readlines()
 
         for line in lines:
+            if line.strip() == '':
+                continue
+                
             url_obj = url_object.Url(line.strip(), 0)
             self.checking_url.put(url_obj)
         return True
