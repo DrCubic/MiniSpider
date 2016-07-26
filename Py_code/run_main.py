@@ -28,7 +28,7 @@ if __name__ == '__main__':
     log.init_log('./log/mini_spider')    
     logging.info('%-35s' % ' * miniSpider is starting ... ')
     red_on_cyan = lambda x: termcolor.colored(x, 'red', 'on_cyan')
-    # *********************************  start  ***************************************
+    # *********************************  start  ***********************
     # set args for the program
     parser = argparse.ArgumentParser(description = 'This is a mini spider program!')
     parser.add_argument('-v', 
@@ -53,6 +53,6 @@ if __name__ == '__main__':
         mini_spider_.pre_print()
         mini_spider_.run_threads()
         
-    # *********************************** end  *****************************************
+    # *********************************** end  **************************
     logging.info('%-35s' % ' * miniSpider is ending ...')
     print red_on_cyan('* MiniSpider is ending ... ')

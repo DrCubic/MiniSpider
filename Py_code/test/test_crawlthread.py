@@ -27,20 +27,18 @@ class TestCrawlThread(unittest.TestCase):
     def setUp(self):
         
         mini_spider_ = mini_spider.MiniSpider('../spider.conf')
-        mini_spider_.output_dir = './urls'
-        mini_spider_.crawl_interval = 1
-        mini_spider_.crawl_timeout = 1
-        mini_spider_.target_url = '.*.jpg'
-        mini_spider_.tag_dict = {}
+        args_dict = {}
+        args_dict['output_dir'] = './urls'
+        args_dict['crawl_interval'] = 1
+        args_dict['crawl_timeout'] = 1
+        args_dict['target_url'] = '.*.jpg'
+        args_dict['max_depth'] = 1
+        args_dict['tag_dict'] = {}
 
         self.crawlthread = crawl_thread.CrawlerThread('thread - 0', 
                                                 mini_spider_.process_request,
                                                 mini_spider_.process_response, 
-                                                mini_spider_.output_dir,
-                                                mini_spider_.crawl_interval,
-                                                mini_spider_.crawl_timeout,
-                                                mini_spider_.target_url,
-                                                mini_spider_.tag_dict)
+                                                args_dict)
 
     def test_is_targeturl(self):
         """
@@ -54,7 +52,14 @@ class TestCrawlThread(unittest.TestCase):
         test False for is_target_url() function 
         """
         url = 'http://www.baidu.com'
-        self.assertFalse(self.crawlthread.is_target_url(url))      
+        self.assertFalse(self.crawlthread.is_target_url(url))   
+
+    def test_save_target(self):
+        """
+        test True for save_target() function
+        """
+        url = 'http://img.firefoxchina.cn/2016/07/4/201607010831530.jpg'
+        self.assertTrue(self.crawlthread.save_target(url))
 
     def tearDown(self):
         self.crawlthread = None

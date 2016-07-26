@@ -19,7 +19,6 @@ import logging
 
 import termcolor
 
-import html_parser
 import url_object
 import config_args
 import crawl_thread
@@ -115,9 +114,6 @@ class MiniSpider(object):
         """
         get seed url from seedUrlFile
 
-        Args:
-            none
-
         Returns:
             True / False : 存在种子文件返回True, 否则返回 False
         """ 
@@ -160,15 +156,20 @@ class MiniSpider(object):
         """
         设置线程池，并启动线程
         """
+        args_dict = {}
+        args_dict['output_dir'] = self.output_dir
+        args_dict['crawl_interval'] = self.crawl_interval
+        args_dict['crawl_timeout'] = self.crawl_timeout
+        args_dict['target_url'] = self.target_url
+        args_dict['max_depth'] = self.max_depth
+        args_dict['tag_dict'] = self.tag_dict
+
         for index in xrange(self.thread_count):
-            thread = crawl_thread.CrawlerThread('thread - %d' % index, 
+            thread_name = 'thread - %d' % index
+            thread = crawl_thread.CrawlerThread(thread_name,
                                                 self.process_request,
                                                 self.process_response, 
-                                                self.output_dir,
-                                                self.crawl_interval,
-                                                self.crawl_timeout,
-                                                self.target_url,
-                                                self.tag_dict)
+                                                args_dict)
 
             thread.setDaemon(True)
             thread.start()
@@ -211,41 +212,33 @@ class MiniSpider(object):
         url_obj = self.checking_url.get()
         return url_obj
 
-    def process_response(self, response, url_obj, flag):
+    def process_response(self, url_obj, flag, extract_url_list=None):
         """
-        线程任务后期处理回调函数：
+        线程任务后期回调函数：
             解析HTML源码，获取下一层URLs 放入checking_url
 
         Args:
-            response : downloading 函数生成的 页面响应对象，其包含 源码、深度、...
+            extract_url_list : 返回抽取出的urls集合
             url_obj  : 被下载页面所处的url链接对象
             flag     : 页面下载具体情况的返回标志 
                      - 0  : 表示下载成功且为非pattern页面
                      - 1  : 表示下载成功且为符合pattern的图片
                      - -1 : 表示页面下载失败
+                     - 2  : depth >= max_depth 的非target - URL
         """
         if self.lock.acquire():
-            if flag == -1: 
+            if flag == -1:
                 self.error_url.append(url_obj)
 
-            elif flag == 0: 
+            elif flag == 0:
                 self.checked_url.append(url_obj)
-
-                if response.depth < self.max_depth:
-                    # parse html for extracting urls
-                    content = response.read()
-                    url = url_obj.get_url()
-
-                    soup = html_parser.HtmlParser(content, self.tag_dict, url)
-                    extract_url_list = soup.extract_url()
-
                     # link add into Checking_Url
-                    for ex_url in extract_url_list:
-                        next_url_obj = url_object.Url(ex_url, response.depth + 1)
-                        if not self.is_visited(next_url_obj):
-                            self.checking_url.put(next_url_obj)
+                for ex_url in extract_url_list:
+                    next_url_obj = url_object.Url(ex_url, int(url_obj.get_depth()) + 1)
+                    if not self.is_visited(next_url_obj):
+                        self.checking_url.put(next_url_obj)
 
-            elif flag == 1: 
+            elif flag == 1:
                 self.checked_url.append(url_obj)
             self.checking_url.task_done()
         self.lock.release()

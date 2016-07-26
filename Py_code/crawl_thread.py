@@ -15,34 +15,37 @@ import threading
 import logging
 import urllib
 import re
+import time
 import os
 
 import downloader
+import html_parser
 
 class CrawlerThread(threading.Thread):
     """
     This class is a crawler thread for crawling pages by breadth-first-crawling
 
     Attributes:
-        checking_url : 存放待爬URL的队列
-        checked_url  : 存放已经爬取过URL的队列
-        dead_thread  : 存放已死的线程名字
-        error_url    : 存放访问出错URL的队列
-        config_arg   : 存放配置参数的参数对象
+        process_request : 前期回调函数
+        process_response: 后期回调函数
+        output_dir      : 存放target 目录
+        crawl_interval  : 爬取间隔
+        crawl_timeout   : 爬取时间延迟
+        target_url      : 目标文件链接格式
+        max_depth       : 爬取最大深度
+        tag_dict        : 链接标签字典
     """
-    def __init__(self, name, process_request, process_response, output_dir, crawl_interval, 
-                                                                            crawl_timeout, 
-                                                                            target_url, 
-                                                                            tag_dict):
+    def __init__(self, name, process_request, process_response, args_dict):
 
         super(CrawlerThread, self).__init__(name=name)
         self.process_request = process_request
         self.process_response = process_response
-        self.output_dir = output_dir
-        self.crawl_interval = crawl_interval
-        self.crawl_timeout = crawl_timeout
-        self.target_url = target_url
-        self.tag_dict = tag_dict    
+        self.output_dir = args_dict['output_dir']
+        self.crawl_interval = args_dict['crawl_interval']
+        self.crawl_timeout = args_dict['crawl_timeout']
+        self.target_url = args_dict['target_url']
+        self.max_depth = args_dict['max_depth']
+        self.tag_dict = args_dict['tag_dict']
 
     def run(self):
         """
@@ -50,23 +53,36 @@ class CrawlerThread(threading.Thread):
         """
         while 1:
             url_obj = self.process_request()
+            time.sleep(self.crawl_interval)
 
             logging.info('%-12s  : get a url  in depth : ' % 
                          threading.currentThread().getName() + str(url_obj.get_depth()))
-            print ('%-12s  : get a url  in depth : ' % 
-                         threading.currentThread().getName() + str(url_obj.get_depth()))
            
-            downloader_obj = downloader.Downloader(url_obj,
-                                                   self.crawl_timeout,
-                                                   self.crawl_interval)
+            if self.is_target_url(url_obj.get_url()):
+                flag = -1
+                if self.save_target(url_obj.get_url()):
+                    flag = 1
+                self.process_response(url_obj, flag)
+                continue
 
-            response, flag = downloader_obj.downloading() #flag = 0 or -1
+            if url_obj.get_depth() < self.max_depth:
+                downloader_obj = downloader.Downloader(url_obj, self.crawl_timeout)
+                response, flag = downloader_obj.downloading() #flag = 0 or -1
+            
+                if flag == -1: # download failed
+                    self.process_response(url_obj, flag)
+                    continue
 
-            if flag == 0 and self.is_target_url(response.geturl()):
-                self.save_target(response)
-                flag = 1
+                if flag == 0: # download sucess
+                    content = response.read()
+                    url = url_obj.get_url()
+                    soup = html_parser.HtmlParser(content, self.tag_dict, url)
+                    extract_url_list = soup.extract_url()
 
-            self.process_response(response, url_obj, flag)
+                    self.process_response(url_obj, flag, extract_url_list)
+            else:
+                flag = 2  # depth > max_depth 的正常URL
+                self.process_response(url_obj, flag)
 
     def is_target_url(self, url):
         """
@@ -78,13 +94,13 @@ class CrawlerThread(threading.Thread):
         Returns:
             True/False : 符合返回True 否则返回False
         """
-        aim_pa = re.compile(self.target_url, re.S)
-        found_aims = re.findall(aim_pa, url)
-        if len(found_aims) > 0:
+        aim_pa = re.compile(self.target_url)
+        found_aim = aim_pa.match(url)
+        if found_aim:
             return True
         return False
 
-    def save_target(self, response):
+    def save_target(self, url):
         """
         save targetUrl-page into outputDir
 
@@ -94,15 +110,16 @@ class CrawlerThread(threading.Thread):
         Returns:
             none
         """
-        if response is None:
-            return
-
         if not os.path.isdir(self.output_dir):
             os.mkdir(self.output_dir)
 
-        file_name = urllib.quote_plus(response.geturl())
+        file_name = urllib.quote_plus(url)
         if len(file_name) > 127:
             file_name = file_name[::-1][:127][::-1]
-        pic_path = "{}/{}".format(self.output_dir, file_name)
-        with open(pic_path, 'wb') as f:
-            f.write(response.read())
+        target_path = "{}/{}".format(self.output_dir, file_name)
+        try:
+            urllib.urlretrieve(url, target_path)
+            return True
+        except IOError as e:
+            logging.warn(' * Save target Faild: %s - %s' % (url, e))
+            return False

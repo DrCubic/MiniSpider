@@ -8,14 +8,13 @@
 
 >**config_args.py** :  this file is to load configurations from spider.conf
 
->**url_object.py**  :  this file is the class for url
+>**Url.py**        :  this file is the class for url
 
 >**crawl_thread.py**:  this file is a unit of crawling-thread
 
 >**html_parse.py**  :  this file is a class for parsing html to extract urls
 
 >**downloader.py**  :  this file is a class for downloading a page
-
 >**log.py**        :  this file is used for logging
 
 **Cfg-files:**

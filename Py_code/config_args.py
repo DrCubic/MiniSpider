@@ -19,15 +19,8 @@ class ConfigArgs(object):
     This class is used for get all configurations of configure_file   
 
      Attributes:
-        UrlListFile   :  存放种子URL的文件路径
-        OutputDir     :  存放爬取目标的文件夹路径
-        MaxDepth      :  爬取的最大深度
-        CrawlTimeout  :  爬取页面的时间延迟
-        CrawlInterval :  爬取的时间间隔
-        TargetUrl     :  爬取目标的url模式
-        ThreadCount   :  最大的线程数目
-        TryTimes      :  URL获取最大次数
-        Pic_Flag      :  图片Url 对象中标志位(0 : normal - 1 : pic)
+        file_path   :  存放配置的文件路径
+        config_dict :  存放参数的字典
     """
 
     def __init__(self, file_path):
@@ -39,7 +32,15 @@ class ConfigArgs(object):
         load from configurations from conf_file
         """
         config = ConfigParser.ConfigParser()
-        conf_res = config.read(self.file_path)
+        try:
+            conf_res = config.read(self.file_path)
+        except ConfigParser.MissingSectionHeaderError as e:
+            logging.error(' * Config-file error: %s' % e)
+            return False
+        except Exception as e:
+            logging.error(' * Config-file error: %s' % e)
+            return False
+
         if len(conf_res) == 0:
             return False
         try:
@@ -53,10 +54,10 @@ class ConfigArgs(object):
             self.config_dict['try_times'] = 3
             self.config_dict['tag_dict'] = {'a':'href', 'img':'src', 'link':'href', 'script':'src'}
         except ConfigParser.NoSectionError as e:
-            logging.error(' * Config_File not exists error : No section: \'spider\'')
+            logging.error(' * Config_File not exists error : No section: \'spider\', %s' % e)
             return False
         except ConfigParser.NoOptionError as e:
-            logging.error(' * Config_File not exists error : No option ')
+            logging.error(' * Config_File not exists error : No option, %s' % e)
             return False
         return True
 

@@ -7,7 +7,7 @@
 ########################################################################
  
 """
-File: html_parse.py
+File: html_parser.py
 Author: mijianhong(mijianhong@baidu.com)
 Date: 2016/07/09 10:37:33
 """
@@ -41,7 +41,6 @@ class HtmlParser(object):
         """
         extract_url_list = []
         if not self.enc_to_utf8():
-            logging.warn(' * EncodingError : This html content could\'s be transfered to utf-8')
             return extract_url_list
 
         host_name = urlparse.urlparse(self.url).netloc
@@ -49,17 +48,15 @@ class HtmlParser(object):
 
         for tag, attr in self.link_tag_dict.iteritems():
             all_found_tags = soup.find_all(tag)
-            for i in all_found_tags:
-                if i.has_attr(attr):
-                    extract_url = i.get(attr).strip()
+            for found_tag in all_found_tags:
+                if found_tag.has_attr(attr):
+                    extract_url = found_tag.get(attr).strip()
 
                     if extract_url.startswith("javascript") or len(extract_url) > 256:
                         continue
-                    if not extract_url.startswith('http'):
-                        extract_url = urlparse.urljoin('http://' + host_name, extract_url)
 
-                    if not extract_url.startswith('https'):
-                        extract_url = urlparse.urljoin('https://' + host_name, extract_url)
+                    if not (extract_url.startswith('http:') or extract_url.startswith('https:')):
+                        extract_url = urlparse.urljoin(self.url, extract_url)
 
                     extract_url_list.append(extract_url)
 
@@ -80,6 +77,7 @@ class HtmlParser(object):
             encode_name = encode_dict['encoding']
             return encode_name
         except Exception as e:
+            logging.error(' * Error coding-detect: %s' % e)
             return None
 
     def enc_to_utf8(self):
@@ -105,9 +103,14 @@ class HtmlParser(object):
                 self.content = self.content.decode(encoding, 'ignore').encode('utf-8')
                 return True
         except UnicodeError as e:
+            logging.warn(' * EncodingError - %s - %s:' % (self.url, e))
             return False
         except UnicodeEncodeError as e:
+            logging.warn(' * EncodingError - %s - %s:' % (self.url, e))
             return False
         except UnicodeDecodeError as e:
+            logging.warn(' * EncodingError - %s - %s:' % (self.url, e))
             return False
-        return False
+        except Exception as e:
+            logging.warn(' * EncodingError - %s - %s:' % (self.url, e))
+            return False

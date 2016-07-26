@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-########################################################################
+########################################################################in
 # 
 # Copyright (c) 2016 Baidu.com, Inc. All Rights Reserved
 # 
@@ -37,7 +37,8 @@ class TestHtmlParse(unittest.TestCase):
         """
         test In for extract_url function
         """
-        self.assertIn('http://img.firefoxchina.cn/2016/07/4/201607010831530.jpg', 
+        url_example = 'http://img.firefoxchina.cn/2016/07/4/201607010831530.jpg'
+        self.assertIn(url_example, 
                        self.htmlparser.extract_url()
                        )
 
