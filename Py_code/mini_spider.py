@@ -1,11 +1,11 @@
 #!/usr/bin/env python-2.7.3
 # -*- coding: utf-8 -*-
 ########################################################################
-# 
+#
 # Copyright (c) 2016 Baidu.com, Inc. All Rights Reserved
-# 
+#
 ########################################################################
- 
+
 """
 File: mini_spider.py
 功能 ：使用python开发一个迷你定向抓取器 mini_spider.py ，实现对种子链接的广度优先抓取，并把URL格式符合特定pattern的网页保存到磁盘上
@@ -16,6 +16,7 @@ import Queue
 import threading
 import os
 import logging
+import re
 
 import termcolor
 
@@ -40,8 +41,8 @@ class MiniSpider(object):
         Initialize variables
         """
         self.checking_url = Queue.Queue(0)
-        self.checked_url = []
-        self.error_url = []
+        self.checked_url = set()
+        self.error_url = set()
         self.config_file_path = config_file_path
         self.lock = threading.Lock()
 
@@ -66,6 +67,7 @@ class MiniSpider(object):
         self.target_url = config_arg.get_target_url()
         self.thread_count = config_arg.get_thread_count()
         self.tag_dict = config_arg.get_tag_dict()
+        self.url_pattern = re.compile(self.target_url)
 
         seedfile_is_exist = self.get_seed_url()
         return seedfile_is_exist
@@ -75,38 +77,38 @@ class MiniSpider(object):
         MiniSpider 创建时显示配置信息
         """
         print termcolor.colored('* MiniSpider Configurations list as follows:', 'green')
-        print termcolor.colored('* %-25s : %s' % ('url_list_file   :', 
-                                                   self.url_list_file), 
+        print termcolor.colored('* %-25s : %s' % ('url_list_file   :',
+                                                   self.url_list_file),
                                                    'green'
                                                    )
 
-        print termcolor.colored('* %-25s : %s' % ('output_directory:', 
-                                                   self.output_dir), 
+        print termcolor.colored('* %-25s : %s' % ('output_directory:',
+                                                   self.output_dir),
                                                    'green'
                                                    )
 
-        print termcolor.colored('* %-25s : %s' % ('max_depth       :', 
-                                                  self.max_depth), 
+        print termcolor.colored('* %-25s : %s' % ('max_depth       :',
+                                                  self.max_depth),
                                                   'green'
                                                   )
 
-        print termcolor.colored('* %-25s : %s' % ('crawl_interval  :', 
-                                                  self.crawl_interval), 
+        print termcolor.colored('* %-25s : %s' % ('crawl_interval  :',
+                                                  self.crawl_interval),
                                                   'green'
                                                   )
 
-        print termcolor.colored('* %-25s : %s' % ('crawl_timeout   :', 
-                                                  self.crawl_timeout), 
+        print termcolor.colored('* %-25s : %s' % ('crawl_timeout   :',
+                                                  self.crawl_timeout),
                                                   'green'
                                                   )
 
-        print termcolor.colored('* %-25s : %s' % ('target_url      :', 
-                                                   self.target_url), 
+        print termcolor.colored('* %-25s : %s' % ('target_url      :',
+                                                   self.target_url),
                                                    'green'
                                                    )
 
-        print termcolor.colored('* %-25s : %s' % ('thread_count    :', 
-                                                  self.thread_count), 
+        print termcolor.colored('* %-25s : %s' % ('thread_count    :',
+                                                  self.thread_count),
                                                   'green'
                                                   )
 
@@ -116,7 +118,7 @@ class MiniSpider(object):
 
         Returns:
             True / False : 存在种子文件返回True, 否则返回 False
-        """ 
+        """
         if not os.path.isfile(self.url_list_file):
             logging.error(' * seedfile is not existing !!!')
             self.program_end('there is no seedfile !')
@@ -128,7 +130,7 @@ class MiniSpider(object):
         for line in lines:
             if line.strip() == '':
                 continue
-                
+
             url_obj = url_object.Url(line.strip(), 0)
             self.checking_url.put(url_obj)
         return True
@@ -151,7 +153,7 @@ class MiniSpider(object):
         logging.info('reason of ending :' + info)
         print termcolor.colored('* program is ended ... ', 'green')
         logging.info('program is ended ... ')
- 
+
     def run_threads(self):
         """
         设置线程池，并启动线程
@@ -160,7 +162,7 @@ class MiniSpider(object):
         args_dict['output_dir'] = self.output_dir
         args_dict['crawl_interval'] = self.crawl_interval
         args_dict['crawl_timeout'] = self.crawl_timeout
-        args_dict['target_url'] = self.target_url
+        args_dict['url_pattern'] = self.url_pattern
         args_dict['max_depth'] = self.max_depth
         args_dict['tag_dict'] = self.tag_dict
 
@@ -168,7 +170,7 @@ class MiniSpider(object):
             thread_name = 'thread - %d' % index
             thread = crawl_thread.CrawlerThread(thread_name,
                                                 self.process_request,
-                                                self.process_response, 
+                                                self.process_response,
                                                 args_dict)
 
             thread.setDaemon(True)
@@ -189,17 +191,13 @@ class MiniSpider(object):
         Returns:
             True / False  -  若访问过则返回 True ，否则返回 False
         """
-        checked_url_list = set()
+        checked_url_list = self.checked_url.union(self.error_url)
 
-        for url_o in self.checked_url:
-            checked_url_list.add(url_o.get_url())
-        for url_o in self.error_url:
-            checked_url_list.add(url_o.get_url())
+        for checked_url_ in checked_url_list:
+            if url_obj.get_url() == checked_url_.get_url():
+                return True
 
-        if url_obj.get_url() in checked_url_list:
-            return True
-
-        return False  
+        return False
 
     def process_request(self):
         """
@@ -220,7 +218,7 @@ class MiniSpider(object):
         Args:
             extract_url_list : 返回抽取出的urls集合
             url_obj  : 被下载页面所处的url链接对象
-            flag     : 页面下载具体情况的返回标志 
+            flag     : 页面下载具体情况的返回标志
                      - 0  : 表示下载成功且为非pattern页面
                      - 1  : 表示下载成功且为符合pattern的图片
                      - -1 : 表示页面下载失败
@@ -228,10 +226,10 @@ class MiniSpider(object):
         """
         if self.lock.acquire():
             if flag == -1:
-                self.error_url.append(url_obj)
+                self.error_url.add(url_obj)
 
             elif flag == 0:
-                self.checked_url.append(url_obj)
+                self.checked_url.add(url_obj)
                     # link add into Checking_Url
                 for ex_url in extract_url_list:
                     next_url_obj = url_object.Url(ex_url, int(url_obj.get_depth()) + 1)
@@ -239,6 +237,6 @@ class MiniSpider(object):
                         self.checking_url.put(next_url_obj)
 
             elif flag == 1:
-                self.checked_url.append(url_obj)
+                self.checked_url.add(url_obj)
             self.checking_url.task_done()
         self.lock.release()

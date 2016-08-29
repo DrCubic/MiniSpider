@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ########################################################################
-# 
+#
 # Copyright (c) 2016 Baidu.com, Inc. All Rights Reserved
-# 
+#
 ########################################################################
- 
+
 """
 File: crawl_thread.py
 Author: mijianhong(mijianhong@baidu.com)
@@ -43,7 +43,7 @@ class CrawlerThread(threading.Thread):
         self.output_dir = args_dict['output_dir']
         self.crawl_interval = args_dict['crawl_interval']
         self.crawl_timeout = args_dict['crawl_timeout']
-        self.target_url = args_dict['target_url']
+        self.url_pattern = args_dict['url_pattern']
         self.max_depth = args_dict['max_depth']
         self.tag_dict = args_dict['tag_dict']
 
@@ -55,9 +55,9 @@ class CrawlerThread(threading.Thread):
             url_obj = self.process_request()
             time.sleep(self.crawl_interval)
 
-            logging.info('%-12s  : get a url  in depth : ' % 
+            logging.info('%-12s  : get a url  in depth : ' %
                          threading.currentThread().getName() + str(url_obj.get_depth()))
-           
+
             if self.is_target_url(url_obj.get_url()):
                 flag = -1
                 if self.save_target(url_obj.get_url()):
@@ -67,8 +67,8 @@ class CrawlerThread(threading.Thread):
 
             if url_obj.get_depth() < self.max_depth:
                 downloader_obj = downloader.Downloader(url_obj, self.crawl_timeout)
-                response, flag = downloader_obj.downloading() #flag = 0 or -1
-            
+                response, flag = downloader_obj.download() #flag = 0 or -1
+
                 if flag == -1: # download failed
                     self.process_response(url_obj, flag)
                     continue
@@ -94,8 +94,7 @@ class CrawlerThread(threading.Thread):
         Returns:
             True/False : 符合返回True 否则返回False
         """
-        aim_pa = re.compile(self.target_url)
-        found_aim = aim_pa.match(url)
+        found_aim =self.url_pattern.match(url)
         if found_aim:
             return True
         return False
@@ -115,7 +114,7 @@ class CrawlerThread(threading.Thread):
 
         file_name = urllib.quote_plus(url)
         if len(file_name) > 127:
-            file_name = file_name[::-1][:127][::-1]
+            file_name = file_name[-127:]
         target_path = "{}/{}".format(self.output_dir, file_name)
         try:
             urllib.urlretrieve(url, target_path)

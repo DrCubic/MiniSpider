@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ########################################################################
-# 
+#
 # Copyright (c) 2016 Baidu.com, Inc. All Rights Reserved
-# 
+#
 ########################################################################
- 
+
 """
 File: downloader.py
 Author: mijianhong(mijianhong@baidu.com)
@@ -29,7 +29,7 @@ class Downloader(object):
         self.try_times = try_times
         self.timeout = timeout
 
-    def downloading(self):
+    def download(self):
         """
         检查url_obj 是否可以被访问，若能访问则放入Checked_Url , 若不能访问则放入Error_Url
 
@@ -38,7 +38,7 @@ class Downloader(object):
             None          :   URL 访问失败
             0 / -1         :   访问成功与失败
         """
-        # starting downloading for try_times
+        # starting download for try_times
         for try_t in range(self.try_times):
             try:
                 response = urllib2.urlopen(self.url_obj.get_url(), timeout=self.timeout)
@@ -49,17 +49,17 @@ class Downloader(object):
                 if try_t == self.try_times - 1:
                     error_info = \
                         '* Downloading failed : %s-%s' % (self.url_obj.get_url(), e)
-                    
+
             except UnicodeEncodeError as e:
                 if try_t == self.try_times - 1:
                     error_info = \
                         '* Downloading failed : %s-%s' % (self.url_obj.get_url(), e)
-                    
+
             except urllib2.HTTPError as e:
                 if try_t == self.try_times - 1:
                     error_info = \
                         '* Downloading failed : %s-%S' % (self.url_obj.get_url(), e)
-            
+
             except socket.timeout as e:
                 if try_t == self.try_times - 1:
                     error_info = \

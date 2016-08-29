@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ########################################################################
-# 
+#
 # Copyright (c) 2016 Baidu.com, Inc. All Rights Reserved
-# 
+#
 ########################################################################
- 
+
 """
 File: test_minispider.py
 Author: mijianhong(mijianhong@baidu.com)
@@ -46,7 +46,7 @@ class TestMiniSpider(unittest.TestCase):
         test True for func - is_visited()
         """
         url = url_object.Url("http://www.baidu.com")
-        self.minispider.checked_url.append(url)
+        self.minispider.checked_url.add(url)
         self.assertTrue(self.minispider.is_visited(url))
 
     def test_has_visited_(self):
@@ -54,7 +54,7 @@ class TestMiniSpider(unittest.TestCase):
         test True for func - is_visited()
         """
         url = url_object.Url("http://www.baidu.com")
-        self.minispider.error_url.append(url)
+        self.minispider.error_url.add(url)
         self.assertTrue(self.minispider.is_visited(url))
 
     def tearDown(self):
